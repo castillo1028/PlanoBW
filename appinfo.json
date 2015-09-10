@@ -1,7 +1,7 @@
 {
     "appKeys": {},
     "capabilities": [
-        "configurable"
+        ""
     ],
     "companyName": "Billy Castillo",
     "longName": "PlanoBW",
@@ -25,7 +25,7 @@
     "shortName": "PlanoBW",
     "uuid": "0cdf83a5-e4b8-4882-af68-8b2a82c988ef",
     "versionCode": 1,
-    "versionLabel": "1.0",
+    "versionLabel": "1.1",
     "watchapp": {
         "watchface": true
     }

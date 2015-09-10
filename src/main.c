@@ -1,8 +1,5 @@
 #include <pebble.h>
   
-
-
-
 static Window *s_main_window; 
 
 
@@ -12,8 +9,32 @@ static TextLayer *s_date_layer;
 static TextLayer *s_up_layer;
 static TextLayer *s_day_layer;
 static GFont s_time_font;
+static Layer *s_battery_layer;
+static int s_battery_level;
 
+static void battery_callback(BatteryChargeState state) {
+  
+s_battery_level = state.charge_percent;
+  
+}
 
+static void battery_update_proc(Layer *layer, GContext *ctx) {
+GRect bounds = layer_get_bounds(layer);
+  // Find the width of the bar
+  int width = (int)(float)(((float)s_battery_level / 100.0F) * 114.0F);
+    
+   // Draw the background
+   graphics_context_set_fill_color(ctx, GColorWhite);
+   graphics_fill_rect(ctx, bounds, 0, GCornerNone);
+                            
+                            
+   // Draw the Bar
+   graphics_context_set_fill_color(ctx, GColorWhite);
+   graphics_fill_rect(ctx, GRect(0, 0, width, bounds.size.h), 0, GCornerNone);
+                            
+  layer_mark_dirty(s_battery_layer);                      
+  
+}
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   
@@ -81,9 +102,6 @@ static void main_window_load(Window *window) {
   s_date_layer = text_layer_create(GRect(0, 120, 144, 35));
   text_layer_set_background_color(s_date_layer, GColorClear);
   text_layer_set_text_color(s_date_layer, GColorWhite);
-
-  
-  
   
   // Improve the layout to be more like a watchface
   text_layer_set_font(s_time_layer, s_time_font);
@@ -101,6 +119,8 @@ static void main_window_load(Window *window) {
   text_layer_set_font(s_day_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_text_alignment(s_day_layer, GTextAlignmentCenter);
   
+  s_battery_layer = layer_create(GRect(6, 160, 132, 2));
+  layer_set_update_proc(s_battery_layer, battery_update_proc);
 
   
   // Add it as a child layer to the Window's root layer
@@ -109,6 +129,7 @@ static void main_window_load(Window *window) {
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_date_layer));
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_up_layer));
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_day_layer));
+  layer_add_child(window_get_root_layer(window), s_battery_layer);
   
 }
 
@@ -122,6 +143,7 @@ static void main_window_unload(Window *window) {
     text_layer_destroy(s_date_layer);
     text_layer_destroy(s_up_layer);
     text_layer_destroy(s_day_layer);
+    layer_destroy(s_battery_layer);
   
   
 }
@@ -142,6 +164,13 @@ static void init() {
   
   // Show the Window on the watch, with animated=true
   window_stack_push(s_main_window, true);
+  
+  // Register for battery service
+  battery_state_service_subscribe(battery_callback);
+  
+  // Battery Layer from the start
+  battery_callback(battery_state_service_peek());
+  
   
   // Register with TickTimerService
   tick_timer_service_subscribe(SECOND_UNIT, tick_handler);  
